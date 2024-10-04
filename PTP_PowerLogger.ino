@@ -7,6 +7,13 @@
 #include <SPI.h>
 #include <SD.h>
 #include <FS.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+const char* ssid = "HD TK";
+const char* password = "shilladiko";
+
+String serverName = "http://akademik.che.itb.ac.id/ptp/api/simpan_data.php";
 
 File TimeFile;
 File VoltFile;
@@ -42,6 +49,11 @@ float currentSampleCount = 0;               /* to count number of sample. */
 float currentMean ;                         /* to calculate the average value from all samples, in analog values*/ 
 float RMSCurrentMean ;                      /* square roof of currentMean, in analog values */   
 float FinalRMSCurrent ;                     /* the final RMS current reading*/
+
+float nilai;
+float nilai2;
+float nilai3;
+float nilai4;
 
 /* 1.a- Voltage Measurement */
 float Van = 0; 
@@ -302,6 +314,42 @@ void displaylcd(){
     LCD.print(currentMicrosLCD/1000000);                                                      /* display current value in LCD in first row  */
 //  LCD.setCursor(7,3);     
     LCD.print(" Sec");
+
+    nilai = FinalRMSCurrent,decimalPrecision;
+    nilai2 = Van,decimalPrecision;
+    nilai3 = FinalRMSCurrent*Van;
+    nilai4 = currentMicrosLCD/1000000;
+
+    if(WiFi.status()== WL_CONNECTED){
+      HTTPClient http;
+
+      String serverPath = serverName + "?nilai=" + nilai + "&nilai2="+ nilai2 + "&nilai3=" + nilai3 + "&nilai4=" + nilai4 + "&nilai5=0&nilai6=0&nilai7=0&nilai8=0";
+      
+      // Your Domain name with URL path or IP address with path
+      http.begin(serverPath.c_str());
+      
+      // If you need Node-RED/server authentication, insert user and password below
+      //http.setAuthorization("REPLACE_WITH_SERVER_USERNAME", "REPLACE_WITH_SERVER_PASSWORD");
+      
+      // Send HTTP GET request
+      int httpResponseCode = http.GET();
+      
+      if (httpResponseCode>0) {
+        Serial.print("HTTP Response code: ");
+        Serial.println(httpResponseCode);
+        String payload = http.getString();
+        Serial.println(payload);
+      }
+      else {
+        Serial.print("Error code: ");
+        Serial.println(httpResponseCode);
+      }
+      // Free resources
+      http.end();
+    }
+    else {
+      Serial.println("WiFi Disconnected");
+    }       
 }
 
 
@@ -383,11 +431,23 @@ startMicrosLCD = micros();                        /* Start counting time for LCD
 //   Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
 //   Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
 
+  WiFi.begin(ssid, password);
+  Serial.println("Connecting");
+  while(WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.print("Connected to WiFi network with IP Address: ");
+  Serial.println(WiFi.localIP());
+ 
+  Serial.println("Timer set to 5 seconds (timerDelay variable), it will take 5 seconds before publishing the first reading.");
+
 }
 
 
 void loop()                                                                                                   /*codes to run again and again */
-{                                      
+{                               
 /* 1- AC & DC Current Measurement */
 
 if(micros() >= currentLastSample + 200)                                                                /* every 0.2 milli second taking 1 reading */
@@ -430,5 +490,4 @@ if (currentMicrosLCD - startMicrosLCD >= periodLCD)                             
 
 /* 3 - Data Save  */
 //dataLog(); //pindahin ke dalam lcd display
-
 }
