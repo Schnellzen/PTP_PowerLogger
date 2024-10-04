@@ -10,8 +10,9 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 
-const char* ssid = "HD TK";
+const char* ssid = "HD TK"; 
 const char* password = "shilladiko";
+
 
 String serverName = "http://akademik.che.itb.ac.id/ptp/api/simpan_data.php";
 
@@ -50,6 +51,7 @@ float currentMean ;                         /* to calculate the average value fr
 float RMSCurrentMean ;                      /* square roof of currentMean, in analog values */   
 float FinalRMSCurrent ;                     /* the final RMS current reading*/
 
+// Number slot available up to nilai8 according to Pak Indra
 float nilai;
 float nilai2;
 float nilai3;
